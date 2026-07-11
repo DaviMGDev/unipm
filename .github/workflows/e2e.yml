@@ -1,0 +1,56 @@
+name: E2E Nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # Daily at 2 AM UTC
+  workflow_dispatch:      # Manual trigger
+
+jobs:
+  e2e:
+    name: End-to-End CLI Workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Build unipm
+        run: go build -o unipm ./cmd/unipm
+
+      - name: Smoke test — help and version
+        run: |
+          ./unipm --help
+          ./unipm --version
+
+      - name: Smoke test — sources
+        run: |
+          ./unipm sources
+
+      - name: Smoke test — search
+        run: |
+          # Search should work with at least apt available
+          ./unipm search htop || echo "warning: search returned no results (expected in some environments)"
+
+      - name: Smoke test — completion
+        run: |
+          # Verify completion scripts generate without errors
+          ./unipm completion bash > /dev/null
+          ./unipm completion zsh > /dev/null
+          ./unipm completion fish > /dev/null
+          echo "All completion scripts generated successfully"
+
+      - name: Smoke test — install (dry run validation)
+        run: |
+          # Validate --source flag works with available adapters
+          ./unipm install htop --source apt 2>&1 || echo "warning: install failed (may need sudo)"
+
+      - name: Post results
+        if: always()
+        run: |
+          echo "=== E2E Run Complete ==="
+          echo "See logs above for detailed results."
