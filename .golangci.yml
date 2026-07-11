@@ -1,0 +1,36 @@
+linters:
+  enable:
+    - gofumpt
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - revive
+    - gosec
+    - goimports
+
+linters-settings:
+  gofumpt:
+    extra-rules: true
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - checkPrivateReceivers: false
+  gosec:
+    excludes:
+      - G204  # subprocess launching is intentional in adapters
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck
+
+run:
+  timeout: 5m
+  go: "1.22"

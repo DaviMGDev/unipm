@@ -1,0 +1,30 @@
+# unipm binary (root-level only)
+/unipm
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vendor directory
+vendor/
+
+# Test artifacts
+*.out
+*.test
+coverage.out
+coverage.html
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+
+# Environment files
+.env
+.env.local

@@ -1,0 +1,30 @@
+Sorting...
+Full Text Search...
+accerciser/stable 3.46.2-3 all
+  interactive Python accessibility explorer for the GNOME desktop
+
+acme-tiny/stable 1:5.0.1-1 all
+  letsencrypt tiny Python client
+
+acr/stable 2.2.0-1 all
+  autoconf like tool
+
+adequate/stable 0.17.5+b5 amd64
+  Debian package quality testing tool
+
+aiohttp-wsgi-serve/stable,testing 0.10.0-1 all
+  run a WSGI application
+
+alembic/stable 1.13.2-4 all
+  lightweight database migration tool for SQLAlchemy
+
+ament-cmake-python/stable 2.7.2-2 all
+  CMake build system for ROS 2 ament packages (Python extension)
+
+ananta/testing 1.1.5-1 all
+  parallel SSH command execution tool
+
+androguard/stable 3.4.0~a1-17 all
+  full Python tool to play with Android files
+
+android-logtags-tools/stable,testing 1:10.0.0+r36-1.1 all

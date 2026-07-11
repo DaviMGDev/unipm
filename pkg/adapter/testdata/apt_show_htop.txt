@@ -1,0 +1,20 @@
+Package: htop
+Version: 3.4.1-5
+Priority: optional
+Section: utils
+Maintainer: Daniel Lange <DLange@debian.org>
+Installed-Size: 434 kB
+Depends: libc6 (>= 2.38), libncursesw6 (>= 6), libtinfo6 (>= 6)
+Suggests: lm-sensors, lsof, strace
+Homepage: https://htop.dev/
+Tag: admin::monitoring, implemented-in::c, interface::text-mode,
+ role::program, scope::utility, uitoolkit::ncurses, use::monitor,
+ works-with::software:running
+Download-Size: 171 kB
+APT-Sources: http://deb.debian.org/debian trixie/main amd64 Packages
+Description: interactive processes viewer
+ Htop is an ncursed-based process viewer similar to top, but it
+ allows one to scroll the list vertically and horizontally to see
+ all processes and their full command lines.
+ .
+ Tasks related to processes (killing, renicing) can be done without
