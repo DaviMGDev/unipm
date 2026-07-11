@@ -56,7 +56,8 @@ func init() {
 }
 
 // setupRouter creates the adapter registry and registers all compiled-in
-// adapters that are available on $PATH.
+// adapters that are available on $PATH, plus any distrobox containers
+// configured in ~/.unipm/config.yaml.
 func setupRouter() *router.Registry {
 	r := router.New()
 
@@ -72,6 +73,17 @@ func setupRouter() *router.Registry {
 	for _, a := range candidates {
 		if a.IsAvailable() {
 			r.Register(a)
+		}
+	}
+
+	// Register distrobox adapters from config.yaml
+	cfg, err := config.Load()
+	if err == nil {
+		for nickname, dc := range cfg.Distrobox {
+			a := adapter.NewDistroboxAdapter(nickname, dc)
+			if a.IsAvailable() {
+				r.Register(a)
+			}
 		}
 	}
 

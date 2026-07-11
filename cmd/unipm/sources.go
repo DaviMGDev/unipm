@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -62,17 +63,16 @@ type adapterStatus struct {
 	available bool
 }
 
-// allAdapterStatuses returns statuses for all compiled-in adapters.
-// This is the canonical list of adapters — must be updated when adding
-// new adapters.
+// allAdapterStatuses returns statuses for all adapters.
+// Compiled-in adapters are listed explicitly; distrobox adapters are
+// discovered from the router at runtime.
 func allAdapterStatuses() []adapterStatus {
-	// Check availability via the router for registered adapters
 	avail := func(name string) bool {
 		_, err := appRouter.Get(name)
 		return err == nil
 	}
 
-	return []adapterStatus{
+	statuses := []adapterStatus{
 		{name: "apt", available: avail("apt")},
 		{name: "npm", available: avail("npm")},
 		{name: "pypi", available: avail("pypi")},
@@ -80,4 +80,17 @@ func allAdapterStatuses() []adapterStatus {
 		{name: "brew", available: avail("brew")},
 		{name: "appimage", available: avail("appimage")},
 	}
+
+	// Discover distrobox adapters from the router.
+	// Their names start with "distrobox-".
+	for _, name := range appRouter.Names() {
+		if strings.HasPrefix(name, "distrobox-") {
+			statuses = append(statuses, adapterStatus{
+				name:      name,
+				available: true, // only registered if available
+			})
+		}
+	}
+
+	return statuses
 }
