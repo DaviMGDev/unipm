@@ -185,22 +185,57 @@ change starts in `specs/`, not in code.
 
 ## PR & Commit Guidelines
 
-### ⚠️ Commit atomicity (MANDATORY)
+### ⚠️ Commit atomicity (MANDATORY — enforced by pre-commit hook)
 
 **Commits MUST be small, atomic, and self-contained.** Each commit represents
 exactly one logical change that can be reviewed, tested, and reverted in
-isolation.
+isolation. This is the single most important rule in this project.
 
-- **Never bundle unrelated changes.** One component = one commit.
-- **Commit after every logical step.** Examples:
-  - `git add go.mod go.sum .gitignore && git commit -m "chore: init Go module and gitignore"`
-  - `git add pkg/adapter/adapter.go && git commit -m "feat(adapter): define PackageManager interface"`
-  - `git add pkg/config/config.go pkg/config/config_test.go && git commit -m "feat(config): add config load/save with defaults"`
-  - `git add pkg/adapter/apt.go pkg/adapter/apt_test.go pkg/adapter/testdata/ && git commit -m "feat(adapter): add apt adapter with golden-fixture tests"`
-- **If a commit message needs bullet points to describe everything, it's too big.**
-- **A single commit spanning 28 files across 6 packages is NEVER acceptable.**
+#### Hard limits (enforced by `.githooks/pre-commit`)
+
+| Limit | Threshold | Action |
+|-------|-----------|--------|
+| Files changed | > 10 | ⚠️ Warning (reconsider) |
+| Files changed | > 20 | 🚫 **REJECTED** |
+| Lines added | > 500 | ⚠️ Warning (reconsider) |
+| Lines added | > 1,000 | 🚫 **REJECTED** |
+
+#### Rules
+
+- **One logical change per commit.** If your commit message needs bullet points
+to describe everything, it's too big. Split it.
 - **Tests go in the same commit as the code they test** (never separate commits).
-- **Infrastructure-only commits are OK**: `.github/` workflows can be their own commit.
+- **Format/lint fixes go with the change they belong to**, not as standalone commits
+(unless they're project-wide and have zero behavior changes).
+- **Renames/refactors MUST be their own commit** — never mix refactoring with
+feature work. Renaming a type and adding a new feature in the same commit
+makes `git blame` useless and bisect impossible.
+- **Infrastructure-only commits are OK**: `.github/` workflows, `.githooks/`,
+`.golangci.yml` can be standalone commits.
+- **Never bundle unrelated packages.** `pkg/router/` + `pkg/ui/` + `pkg/state/`
+renames in one commit is a violation.
+
+#### Examples of ACCEPTABLE atomic commits
+
+```
+git add go.mod go.sum .gitignore && git commit -m "chore: init Go module and gitignore"
+git add pkg/adapter/adapter.go && git commit -m "feat(adapter): define PackageManager interface"
+git add pkg/config/config.go pkg/config/config_test.go && git commit -m "feat(config): add config load/save with defaults"
+git add pkg/adapter/apt.go pkg/adapter/apt_test.go pkg/adapter/testdata/ && git commit -m "feat(adapter): add apt adapter with golden-fixture tests"
+```
+
+#### Examples of REJECTED commits
+
+```
+❌ feat(router,ui): extract router, add collision TUI, fix lint, rename types
+   → 4 unrelated changes. Should be 4 commits.
+
+❌ refactor: rename StateRecord→Record and add TUI and fix lint warnings
+   → Rename + feature + lint all in one. Each goes in its own commit.
+
+❌ Single commit touching 16 files across 5 packages
+   → Rejected by pre-commit hook (files > 10, lines > 500).
+```
 
 This applies to AI agents and humans equally. Violating this rule produces
 unreviewable history and makes `git bisect` useless.
@@ -271,7 +306,13 @@ From [specs/ops.md](specs/ops.md):
 
 - **Read specs before writing code.** All behavior is defined in `specs/`. Read `specs/index.md` for the reading order, then follow through all 8 spec files.
 - **The `PackageManager` interface is the contract.** Every adapter must implement it — see [ADR-0001](specs/adr/0001-adapter-pattern.md). The router never changes when backends are added.
-- **⚠️ Commits MUST be atomic (see rule above).** Do NOT bundle multiple unrelated changes in one commit. Commit after every logical step. Tests go in the same commit as their code.
+- **⚠️ Commits MUST be atomic (see hard limits above).** This is the #1 rule.
+  - >10 files or >500 lines: split without asking.
+  - Never bundle refactors + features + lint fixes in one commit.
+  - Commit after EVERY logical step. No exceptions.
+  - If you just completed 3 independent pieces of work, make 3 commits — not 1.
+  - The pre-commit hook will REJECT commits >20 files or >1000 lines.
+  - Tests go in the same commit as their code.
 - **Tests run without Docker locally.** Tier 1 logic tests use golden-file fixtures — no containers required. Tier 2 integration tests require Docker and run in CI. See [ADR-0003](specs/adr/0003-testing-strategy.md).
 - **State and config live in `~/.unipm/`.** Never hardcode paths. Use `os.UserHomeDir()` and create the directory on first access.
 - **Specs use EARS notation** for acceptance criteria (5 patterns). The patterns are inlined in `specs/user_stories.md`.

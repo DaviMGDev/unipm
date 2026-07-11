@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# commit-msg — enforce Conventional Commits format.
+set -euo pipefail
+
+commit_msg=$(cat "$1")
+
+# Extract first line (subject)
+subject=$(echo "$commit_msg" | head -1)
+
+# Conventional Commits pattern: type(optional-scope)!?: description
+# Allowed types: feat, fix, docs, refactor, test, chore, style, perf
+pattern='^(feat|fix|docs|refactor|test|chore|style|perf)(\([a-z0-9._-]+\))?!?: .+'
+
+if ! echo "$subject" | grep -qE "$pattern"; then
+    echo ""
+    echo "🚫 COMMIT REJECTED: subject does not follow Conventional Commits."
+    echo ""
+    echo "   Expected format: <type>(<scope>): <description>"
+    echo "   Types: feat, fix, docs, refactor, test, chore, style, perf"
+    echo ""
+    echo "   Examples:"
+    echo "     feat(adapter): add pypi adapter with search and install"
+    echo "     fix(router): deduplicate search results by (source, name)"
+    echo "     docs: add CONTRIBUTING.md"
+    echo ""
+    echo "   Your subject: $subject"
+    echo ""
+    echo "   See CONTRIBUTING.md § 'Commit Conventions' for the rule."
+    exit 1
+fi
+
+# Check subject length (max 72 chars per convention)
+subject_len=${#subject}
+if [ "$subject_len" -gt 72 ]; then
+    echo ""
+    echo "⚠️  WARNING: commit subject is $subject_len characters (max 72)."
+    echo "   Consider shortening it."
+    echo ""
+fi

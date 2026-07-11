@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# pre-commit — enforce atomic commits by checking diff size.
+# WARNING if >10 files or >500 lines added.
+# ERROR if >20 files or >1000 lines added (blocks commit).
+set -euo pipefail
+
+MAX_FILES_WARN=10
+MAX_FILES_ERROR=20
+MAX_LINES_WARN=500
+MAX_LINES_ERROR=1000
+
+# Count staged files (added, modified, renamed — not deleted)
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | wc -l)
+# Count lines added in staged changes
+lines_added=$(git diff --cached --numstat | awk '{sum+=$1} END {print sum+0}')
+
+if [ "$staged_files" -gt "$MAX_FILES_ERROR" ]; then
+    echo ""
+    echo "🚫 COMMIT REJECTED: $staged_files files staged (max $MAX_FILES_ERROR)."
+    echo "   This commit is too large. Split into smaller, atomic commits."
+    echo "   Each commit should be ONE logical change — reviewable and revertable in isolation."
+    echo ""
+    echo "   See CONTRIBUTING.md § 'Commit Atomicity' for the rule."
+    exit 1
+fi
+
+if [ "$lines_added" -gt "$MAX_LINES_ERROR" ]; then
+    echo ""
+    echo "🚫 COMMIT REJECTED: $lines_added lines added (max $MAX_LINES_ERROR)."
+    echo "   This commit is too large. Split into smaller, atomic commits."
+    echo "   Each commit should be ONE logical change — reviewable and revertable in isolation."
+    echo ""
+    echo "   See CONTRIBUTING.md § 'Commit Atomicity' for the rule."
+    exit 1
+fi
+
+if [ "$staged_files" -gt "$MAX_FILES_WARN" ]; then
+    echo ""
+    echo "⚠️  WARNING: $staged_files files staged (threshold: $MAX_FILES_WARN)."
+    echo "   Is this really ONE logical change? Consider splitting."
+    echo "   Proceeding, but CI may reject oversized PRs."
+    echo ""
+fi
+
+if [ "$lines_added" -gt "$MAX_LINES_WARN" ]; then
+    echo ""
+    echo "⚠️  WARNING: $lines_added lines added (threshold: $MAX_LINES_WARN)."
+    echo "   Is this really ONE logical change? Consider splitting."
+    echo "   Proceeding, but CI may reject oversized PRs."
+    echo ""
+fi

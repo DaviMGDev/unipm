@@ -56,6 +56,9 @@ go build -o unipm ./cmd/unipm
 
 # Verify
 ./unipm --version
+
+# Enable pre-commit hooks (enforces atomic commits + conventional commit format)
+git config core.hooksPath .githooks
 ```
 
 ---
@@ -134,6 +137,46 @@ specs/               # VibeSpecs specification files (see specs/index.md)
 
 See [ADR-0001](specs/adr/0001-adapter-pattern.md) for the rationale behind the
 adapter pattern.
+
+---
+
+---
+
+## Commit Atomicity
+
+> ⚠️ **This is the most important rule in the project.** Enforced by
+> `.githooks/pre-commit`.
+
+**Commits MUST be small, atomic, and self-contained.** Each commit represents
+exactly one logical change that can be reviewed, tested, and reverted in
+isolation.
+
+### Hard limits
+
+| Limit | Threshold | Action |
+|-------|-----------|--------|
+| Files changed | > 10 | ⚠️ Warning |
+| Files changed | > 20 | 🚫 Rejected (blocks commit) |
+| Lines added | > 500 | ⚠️ Warning |
+| Lines added | > 1,000 | 🚫 Rejected (blocks commit) |
+
+### Rules
+
+- **One logical change per commit.** If your commit message needs bullet points,
+split it.
+- **Tests go in the same commit as the code they test.**
+- **Renames/refactors MUST be their own commit.** Never mix refactoring with features.
+- **Never bundle unrelated packages.** `pkg/router/` + `pkg/ui/` + lint fixes
+in one commit is a violation.
+
+### Enabling the hooks
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hooks are automatically active after `git clone` if you run the setup
+above. CI also validates commit conventions.
 
 ---
 

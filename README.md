@@ -279,8 +279,13 @@ Contributions are welcome! Here's how to get started:
 
 1. Fork the repository.
 2. Create a feature branch (`git checkout -b feat/my-feature`).
-3. Commit your changes with conventional commit messages.
-4. Push to your fork and open a pull request.
+3. **Enable git hooks:** `git config core.hooksPath .githooks` (enforces atomic commits).
+4. Commit your changes with **atomic, conventional commit messages**.
+5. Push to your fork and open a pull request.
+
+> ⚠️ **Atomic commits are mandatory.** Each commit = one logical change.
+> Max 10 files / 500 lines per commit (enforced by pre-commit hook).
+> See [CONTRIBUTING.md](CONTRIBUTING.md) § Commit Atomicity for the full rule.
 
 ### Development requirements
 
