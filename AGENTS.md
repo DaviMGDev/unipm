@@ -185,6 +185,26 @@ change starts in `specs/`, not in code.
 
 ## PR & Commit Guidelines
 
+### ⚠️ Commit atomicity (MANDATORY)
+
+**Commits MUST be small, atomic, and self-contained.** Each commit represents
+exactly one logical change that can be reviewed, tested, and reverted in
+isolation.
+
+- **Never bundle unrelated changes.** One component = one commit.
+- **Commit after every logical step.** Examples:
+  - `git add go.mod go.sum .gitignore && git commit -m "chore: init Go module and gitignore"`
+  - `git add pkg/adapter/adapter.go && git commit -m "feat(adapter): define PackageManager interface"`
+  - `git add pkg/config/config.go pkg/config/config_test.go && git commit -m "feat(config): add config load/save with defaults"`
+  - `git add pkg/adapter/apt.go pkg/adapter/apt_test.go pkg/adapter/testdata/ && git commit -m "feat(adapter): add apt adapter with golden-fixture tests"`
+- **If a commit message needs bullet points to describe everything, it's too big.**
+- **A single commit spanning 28 files across 6 packages is NEVER acceptable.**
+- **Tests go in the same commit as the code they test** (never separate commits).
+- **Infrastructure-only commits are OK**: `.github/` workflows can be their own commit.
+
+This applies to AI agents and humans equally. Violating this rule produces
+unreviewable history and makes `git bisect` useless.
+
 ### Commit format (Conventional Commits 1.0.0)
 
 ```
@@ -249,11 +269,9 @@ From [specs/ops.md](specs/ops.md):
 
 ## Notes for AI Agents
 
-- **There is no code yet.** This project is specification-only. All behavior is defined in `specs/`. Before writing any code, read `specs/index.md` for the reading order, then follow through all 8 spec files.
+- **Read specs before writing code.** All behavior is defined in `specs/`. Read `specs/index.md` for the reading order, then follow through all 8 spec files.
 - **The `PackageManager` interface is the contract.** Every adapter must implement it — see [ADR-0001](specs/adr/0001-adapter-pattern.md). The router never changes when backends are added.
-- **No go.mod exists.** The first commit with code should include `go mod init github.com/DaviMGDev/unipm` and `go.sum`.
-- **No .gitignore exists.** Create one before writing code. At minimum: `unipm` binary, `.DS_Store`, `vendor/`, `*.out`, `coverage.out`.
-- **No .github/ directory exists.** CI is referenced throughout specs but not configured. Set up GitHub Actions for lint + test before Phase 2.
+- **⚠️ Commits MUST be atomic (see rule above).** Do NOT bundle multiple unrelated changes in one commit. Commit after every logical step. Tests go in the same commit as their code.
 - **Tests run without Docker locally.** Tier 1 logic tests use golden-file fixtures — no containers required. Tier 2 integration tests require Docker and run in CI. See [ADR-0003](specs/adr/0003-testing-strategy.md).
 - **State and config live in `~/.unipm/`.** Never hardcode paths. Use `os.UserHomeDir()` and create the directory on first access.
 - **Specs use EARS notation** for acceptance criteria (5 patterns). The patterns are inlined in `specs/user_stories.md`.
