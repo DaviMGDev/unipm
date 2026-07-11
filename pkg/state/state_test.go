@@ -19,8 +19,8 @@ func setupTempHome(t *testing.T) func() {
 	}
 }
 
-// writeStateFile writes a StateFile to the state path for testing.
-func writeStateFile(t *testing.T, sf StateFile) {
+// writeFile writes a File to the state path for testing.
+func writeFile(t *testing.T, sf File) {
 	t.Helper()
 	home := os.Getenv("HOME")
 	dir := filepath.Join(home, dirName)
@@ -61,9 +61,9 @@ func TestLoad_UnknownVersion_ReturnsError(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version:  999,
-		Packages: []StateRecord{},
+		Packages: []Record{},
 	})
 
 	_, err := Load()
@@ -76,9 +76,9 @@ func TestSaveAndLoad_RoundTrip(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	sf := StateFile{
+	sf := File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{
 				Name:        "htop",
 				Source:      "apt",
@@ -124,7 +124,7 @@ func TestAdd_AppendsRecord(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	record := StateRecord{
+	record := Record{
 		Name:        "htop",
 		Source:      "apt",
 		Version:     "3.3.0",
@@ -152,7 +152,7 @@ func TestAdd_DuplicateName_ReturnsError(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	record := StateRecord{
+	record := Record{
 		Name:        "htop",
 		Source:      "apt",
 		Version:     "3.3.0",
@@ -174,9 +174,9 @@ func TestRemove_DeletesRecord(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{Name: "htop", Source: "apt", Version: "3.3.0", InstalledAt: now()},
 			{Name: "httpie", Source: "pypi", Version: "3.2.1", InstalledAt: now()},
 		},
@@ -202,9 +202,9 @@ func TestRemove_NotFound_ReturnsError(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version:  CurrentVersion,
-		Packages: []StateRecord{},
+		Packages: []Record{},
 	})
 
 	err := Remove("nonexistent")
@@ -217,9 +217,9 @@ func TestGet_FindsRecord(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{Name: "htop", Source: "apt", Version: "3.3.0", InstalledAt: now()},
 		},
 	})
@@ -240,9 +240,9 @@ func TestGet_NotFound_ReturnsError(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version:  CurrentVersion,
-		Packages: []StateRecord{},
+		Packages: []Record{},
 	})
 
 	_, err := Get("nonexistent")
@@ -255,9 +255,9 @@ func TestList_ReturnsAllRecords(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{Name: "htop", Source: "apt", Version: "3.3.0", InstalledAt: now()},
 			{Name: "httpie", Source: "pypi", Version: "3.2.1", InstalledAt: now()},
 			{Name: "ripgrep", Source: "brew", Version: "14.1.0", InstalledAt: now()},
@@ -291,9 +291,9 @@ func TestUpdateVersion_RefreshesRecord(t *testing.T) {
 	defer cleanup()
 
 	oldTime := "2026-01-01T00:00:00Z"
-	writeStateFile(t, StateFile{
+	writeFile(t, File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{Name: "htop", Source: "apt", Version: "3.2.0", InstalledAt: oldTime},
 		},
 	})
@@ -329,9 +329,9 @@ func TestSave_AtomicWrite_NoCorruption(t *testing.T) {
 	cleanup := setupTempHome(t)
 	defer cleanup()
 
-	sf := StateFile{
+	sf := File{
 		Version: CurrentVersion,
-		Packages: []StateRecord{
+		Packages: []Record{
 			{Name: "htop", Source: "apt", Version: "3.3.0", InstalledAt: now()},
 		},
 	}

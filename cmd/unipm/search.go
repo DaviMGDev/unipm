@@ -5,7 +5,6 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/DaviMGDev/unipm/pkg/adapter"
@@ -14,41 +13,20 @@ import (
 
 func init() {
 	searchCmd.Flags().Int("timeout", 10, "per-adapter timeout in seconds")
+	searchCmd.Flags().StringP("source", "s", "", "source(s) to search (comma-separated, e.g. apt,npm)")
 }
 
 var searchCmd = &cobra.Command{
 	Use:   "search <query>",
 	Short: "Search for a package across all available sources",
 	Long: `Query all available package backends in parallel and display
-results in a unified table with Source, Name, Version, and Description.`,
+results in a unified table with Source, Name, Version, and Description.
+
+Use --source to limit the search to specific backends:
+  unipm search htop --source apt
+  unipm search react -s npm`,
 	Args: cobra.ExactArgs(1),
 	RunE: runSearch,
-}
-
-// availableAdapters returns a slice of all adapters that are currently
-// available on the system (based on $PATH checks).
-func availableAdapters() []adapter.PackageManager {
-	var adapters []adapter.PackageManager
-
-	candidates := []adapter.PackageManager{
-		&adapter.AptAdapter{},
-		&adapter.NpmAdapter{},
-	}
-
-	for _, a := range candidates {
-		if a.IsAvailable() {
-			adapters = append(adapters, a)
-		}
-	}
-
-	return adapters
-}
-
-// searchResult pairs a search result slice with the adapter that produced it.
-type searchResult struct {
-	packages []adapter.Package
-	source   string
-	err      error
 }
 
 // runSearch is the handler for the search command.
@@ -56,9 +34,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	query := args[0]
 	timeoutSec, _ := cmd.Flags().GetInt("timeout")
 	timeout := time.Duration(timeoutSec) * time.Second
+	sourceFlag, _ := cmd.Flags().GetString("source")
 
-	adapters := availableAdapters()
-	if len(adapters) == 0 {
+	if appRouter.IsEmpty() {
 		return fmt.Errorf(
 			"no package managers are available.\n\n" +
 				"unipm requires at least one of: apt, npm.\n" +
@@ -66,64 +44,28 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	// Fan out to all adapters in parallel
-	var wg sync.WaitGroup
-	results := make(chan searchResult, len(adapters))
-
-	for _, a := range adapters {
-		wg.Add(1)
-		go func(ad adapter.PackageManager) {
-			defer wg.Done()
-
-			done := make(chan searchResult, 1)
-			go func() {
-				pkgs, err := ad.Search(query)
-				done <- searchResult{packages: pkgs, source: ad.Name(), err: err}
-			}()
-
-			select {
-			case res := <-done:
-				results <- res
-			case <-time.After(timeout):
-				results <- searchResult{
-					source: ad.Name(),
-					err:    fmt.Errorf("timeout after %v", timeout),
-				}
-			}
-		}(a)
+	// If --source is given, search only named sources
+	if sourceFlag != "" {
+		return searchFromSources(query, sourceFlag, timeout)
 	}
 
-	wg.Wait()
-	close(results)
+	// Fan out to all registered adapters via the router
+	allPackages, timedOutSources, erroredSources := appRouter.SearchAll(query, timeout)
 
-	// Collect and merge results
-	var allPackages []adapter.Package
-	var timedOutSources []string
-	hadErrors := false
-
-	for res := range results {
-		if res.err != nil {
-			if strings.Contains(res.err.Error(), "timeout") {
-				timedOutSources = append(timedOutSources, res.source)
-			} else {
-				fmt.Fprintf(os.Stderr, "warning: %s search failed: %v\n", res.source, res.err)
-				hadErrors = true
-			}
-			continue
-		}
-		allPackages = append(allPackages, res.packages...)
-	}
-
-	// Deduplicate by (Source, Name)
-	allPackages = deduplicatePackages(allPackages)
-
-	// Print warnings
+	// Print warnings for timed-out adapters
 	for _, source := range timedOutSources {
 		fmt.Fprintf(os.Stderr, "warning: %s search timed out (showing partial results)\n", source)
 	}
 
+	// Print warnings for errored adapters
+	for _, source := range erroredSources {
+		fmt.Fprintf(os.Stderr, "warning: %s search failed\n", source)
+	}
+
+	hadFailures := len(timedOutSources) > 0 || len(erroredSources) > 0
+
 	if len(allPackages) == 0 {
-		if hadErrors || len(timedOutSources) > 0 {
+		if hadFailures {
 			fmt.Println("No results found. Some backends timed out or failed — try again or adjust --timeout.")
 		} else {
 			fmt.Printf("No packages found for %q.\n", query)
@@ -137,23 +79,39 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// deduplicatePackages removes duplicate entries where both Source and Name
-// match. The first occurrence is kept.
-func deduplicatePackages(packages []adapter.Package) []adapter.Package {
-	seen := make(map[string]bool)
-	var deduped []adapter.Package
-	for _, p := range packages {
-		key := p.Source + "/" + p.Name
-		if !seen[key] {
-			seen[key] = true
-			deduped = append(deduped, p)
+// searchFromSources searches only the named adapter(s) synchronously.
+func searchFromSources(query, sourceFlag string, timeout time.Duration) error {
+	sourceNames := strings.Split(sourceFlag, ",")
+
+	for _, name := range sourceNames {
+		name = strings.TrimSpace(name)
+		a, err := appRouter.Get(name)
+		if err != nil {
+			return err
+		}
+
+		pkgs, err := a.Search(query)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: %s search failed: %v\n", name, err)
+			continue
+		}
+
+		if len(pkgs) > 0 {
+			fmt.Printf("\n── %s ──\n", name)
+			printSearchTable(pkgs)
 		}
 	}
-	return deduped
+
+	return nil
 }
 
 // printSearchTable outputs search results as a simple aligned table.
 func printSearchTable(packages []adapter.Package) {
+	if len(packages) == 0 {
+		fmt.Println("(no results)")
+		return
+	}
+
 	// Sort by source then name for consistent output
 	sort.Slice(packages, func(i, j int) bool {
 		if packages[i].Source != packages[j].Source {

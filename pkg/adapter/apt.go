@@ -190,7 +190,7 @@ func parseAptShow(output string) Details {
 			case "Installed-Size":
 				// Installed-Size is in KB
 				var sizeKB int64
-				fmt.Sscanf(value, "%d", &sizeKB)
+				_, _ = fmt.Sscanf(value, "%d", &sizeKB)
 				d.Size = sizeKB * 1024
 			}
 		} else {

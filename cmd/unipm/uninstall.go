@@ -30,7 +30,7 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("lookup %s: %w", pkgName, err)
 	}
 
-	a, err := findAdapterByName(rec.Source)
+	a, err := appRouter.Get(rec.Source)
 	if err != nil {
 		return fmt.Errorf("uninstall %s: %w", pkgName, err)
 	}
@@ -48,7 +48,7 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Remove %s from unipm tracking anyway? [y/N] ", pkgName)
 
 		var response string
-		fmt.Scanln(&response)
+		_, _ = fmt.Scanln(&response)
 		if strings.ToLower(strings.TrimSpace(response)) != "y" {
 			return fmt.Errorf("uninstall cancelled: %w", err)
 		}

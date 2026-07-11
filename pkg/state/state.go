@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 )
 
-// StateRecord represents a single package installed through unipm.
-type StateRecord struct {
+// Record represents a single package installed through unipm.
+type Record struct {
 	// Name is the package identifier (e.g., "htop", "httpie").
 	Name string `json:"name"`
 
@@ -27,14 +27,14 @@ type StateRecord struct {
 	InstalledAt string `json:"installed_at"`
 }
 
-// StateFile is the on-disk representation of the state file.
-type StateFile struct {
+// File is the on-disk representation of the state file.
+type File struct {
 	// Version is the state file schema version. unipm rejects unknown
 	// versions with a migration instruction.
 	Version int `json:"version"`
 
 	// Packages is the list of tracked package records.
-	Packages []StateRecord `json:"packages"`
+	Packages []Record `json:"packages"`
 }
 
 const (
@@ -81,32 +81,32 @@ func ensureDir() error {
 }
 
 // Load reads the state file from ~/.unipm/state.json. If the file does
-// not exist, it returns an empty StateFile with the current version.
+// not exist, it returns an empty File with the current version.
 // If the file exists but has an unknown version, it returns an error.
-func Load() (StateFile, error) {
+func Load() (File, error) {
 	p, err := path()
 	if err != nil {
-		return StateFile{}, err
+		return File{}, err
 	}
 
 	data, err := os.ReadFile(p)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return StateFile{
+			return File{
 				Version:  CurrentVersion,
-				Packages: []StateRecord{},
+				Packages: []Record{},
 			}, nil
 		}
-		return StateFile{}, fmt.Errorf("read state file %s: %w", p, err)
+		return File{}, fmt.Errorf("read state file %s: %w", p, err)
 	}
 
-	var sf StateFile
+	var sf File
 	if err := json.Unmarshal(data, &sf); err != nil {
-		return StateFile{}, fmt.Errorf("parse state file %s: %w", p, err)
+		return File{}, fmt.Errorf("parse state file %s: %w", p, err)
 	}
 
 	if sf.Version != CurrentVersion {
-		return StateFile{}, fmt.Errorf(
+		return File{}, fmt.Errorf(
 			"unsupported state file version %d (expected %d). "+
 				"Run 'unipm migrate' to upgrade your state file.",
 			sf.Version, CurrentVersion,
@@ -114,7 +114,7 @@ func Load() (StateFile, error) {
 	}
 
 	if sf.Packages == nil {
-		sf.Packages = []StateRecord{}
+		sf.Packages = []Record{}
 	}
 
 	return sf, nil
@@ -123,7 +123,7 @@ func Load() (StateFile, error) {
 // Save writes the state file atomically to ~/.unipm/state.json with 0600
 // permissions. It writes to a temp file first, then renames to prevent
 // corruption on crash or power loss.
-func Save(sf StateFile) error {
+func Save(sf File) error {
 	sf.Version = CurrentVersion
 
 	data, err := json.MarshalIndent(sf, "", "  ")
@@ -155,9 +155,9 @@ func Save(sf StateFile) error {
 	return nil
 }
 
-// Add appends a new StateRecord to the state file. Returns an error if a
+// Add appends a new Record to the state file. Returns an error if a
 // package with the same name already exists.
-func Add(record StateRecord) error {
+func Add(record Record) error {
 	sf, err := Load()
 	if err != nil {
 		return fmt.Errorf("add %s: %w", record.Name, err)
@@ -179,7 +179,7 @@ func Add(record StateRecord) error {
 	return nil
 }
 
-// Remove deletes a StateRecord by name from the state file. Returns an
+// Remove deletes a Record by name from the state file. Returns an
 // error if the package is not found.
 func Remove(name string) error {
 	sf, err := Load()
@@ -188,7 +188,7 @@ func Remove(name string) error {
 	}
 
 	found := false
-	var filtered []StateRecord
+	var filtered []Record
 	for _, p := range sf.Packages {
 		if p.Name == name {
 			found = true
@@ -210,12 +210,12 @@ func Remove(name string) error {
 	return nil
 }
 
-// Get finds a StateRecord by name. Returns an error if the package is not
+// Get finds a Record by name. Returns an error if the package is not
 // found.
-func Get(name string) (StateRecord, error) {
+func Get(name string) (Record, error) {
 	sf, err := Load()
 	if err != nil {
-		return StateRecord{}, fmt.Errorf("get %s: %w", name, err)
+		return Record{}, fmt.Errorf("get %s: %w", name, err)
 	}
 
 	for _, p := range sf.Packages {
@@ -224,11 +224,11 @@ func Get(name string) (StateRecord, error) {
 		}
 	}
 
-	return StateRecord{}, fmt.Errorf("package %q was not installed via unipm", name)
+	return Record{}, fmt.Errorf("package %q was not installed via unipm", name)
 }
 
-// List returns all StateRecords from the state file.
-func List() ([]StateRecord, error) {
+// List returns all Records from the state file.
+func List() ([]Record, error) {
 	sf, err := Load()
 	if err != nil {
 		return nil, fmt.Errorf("list packages: %w", err)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/DaviMGDev/unipm/pkg/adapter"
 	"github.com/DaviMGDev/unipm/pkg/state"
+	"github.com/DaviMGDev/unipm/pkg/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -27,31 +28,6 @@ Examples:
 	RunE: runInstall,
 }
 
-// findAdapterByName returns the adapter with the given name, or an error
-// if no matching adapter is available.
-func findAdapterByName(name string) (adapter.PackageManager, error) {
-	for _, a := range availableAdapters() {
-		if a.Name() == name {
-			return a, nil
-		}
-	}
-
-	available := availableNames()
-	return nil, fmt.Errorf(
-		"%q is not available.\n\nAvailable sources: %s\n\nRun 'unipm sources' to see all detected package managers.",
-		name, strings.Join(available, ", "),
-	)
-}
-
-// availableNames returns the names of all available adapters, sorted.
-func availableNames() []string {
-	var names []string
-	for _, a := range availableAdapters() {
-		names = append(names, a.Name())
-	}
-	return names
-}
-
 // runInstall is the handler for the install command.
 func runInstall(cmd *cobra.Command, args []string) error {
 	pkgName := args[0]
@@ -69,18 +45,18 @@ func runInstall(cmd *cobra.Command, args []string) error {
 // installFromSources installs the package from the named source(s).
 func installFromSources(pkgName, sourceFlag string) error {
 	sourceNames := strings.Split(sourceFlag, ",")
-	var sourceList []adapter.PackageManager
 
 	for _, name := range sourceNames {
 		name = strings.TrimSpace(name)
-		a, err := findAdapterByName(name)
+		a, err := appRouter.Get(name)
 		if err != nil {
-			return err
+			available := strings.Join(appRouter.Names(), ", ")
+			return fmt.Errorf(
+				"%q is not available.\n\nAvailable sources: %s\n\nRun 'unipm sources' to see all detected package managers.",
+				name, available,
+			)
 		}
-		sourceList = append(sourceList, a)
-	}
 
-	for _, a := range sourceList {
 		if err := installSingle(a, pkgName); err != nil {
 			return err
 		}
@@ -92,12 +68,13 @@ func installFromSources(pkgName, sourceFlag string) error {
 // installWithCollision searches all adapters and handles the result
 // based on how many matches are found.
 func installWithCollision(pkgName string) error {
-	adapters := availableAdapters()
-	if len(adapters) == 0 {
+	if appRouter.IsEmpty() {
 		return fmt.Errorf("no package managers available. Run 'unipm sources' to check.")
 	}
 
-	// Search all adapters (synchronously for now; router will add parallelism)
+	adapters := appRouter.List()
+
+	// Search all adapters synchronously
 	var matches []adapter.Package
 	for _, a := range adapters {
 		pkgs, err := a.Search(pkgName)
@@ -117,19 +94,25 @@ func installWithCollision(pkgName string) error {
 	}
 
 	if len(matches) == 1 {
-		return installSingle(findAdapterForPackage(matches[0]), pkgName)
+		a, err := appRouter.Get(matches[0].Source)
+		if err != nil {
+			return err
+		}
+		return installSingle(a, pkgName)
 	}
 
-	// Multiple matches — collision. TUI comes in Phase 2.
-	fmt.Printf("'%s' was found in %d sources:\n\n", pkgName, len(matches))
-	for _, p := range matches {
-		fmt.Printf("  [%s] %s (%s) — %s\n", p.Source, p.Name, p.Version, p.Description)
+	// Multiple matches — collision. Open TUI for selection.
+	selected, err := ui.RunSelection(matches)
+	if err != nil {
+		return err
 	}
-	fmt.Printf("\n⚠ Collision resolution TUI is coming in Phase 2.\n")
-	fmt.Printf("For now, use --source to pick a specific backend:\n")
-	fmt.Printf("  unipm install %s --source <source>\n", pkgName)
 
-	return nil
+	a, err := appRouter.Get(selected.Source)
+	if err != nil {
+		return err
+	}
+
+	return installSingle(a, pkgName)
 }
 
 // installSingle installs a package from a specific adapter and records it.
@@ -152,7 +135,7 @@ func installSingle(a adapter.PackageManager, pkgName string) error {
 		version = info.Version
 	}
 
-	record := state.StateRecord{
+	record := state.Record{
 		Name:        pkgName,
 		Source:      a.Name(),
 		Version:     version,
@@ -165,15 +148,4 @@ func installSingle(a adapter.PackageManager, pkgName string) error {
 
 	fmt.Printf("✓ %s %s installed from %s\n", pkgName, version, a.Name())
 	return nil
-}
-
-// findAdapterForPackage returns the adapter that produced the given package.
-// Panics if no matching adapter is found (should not happen in normal flow).
-func findAdapterForPackage(pkg adapter.Package) adapter.PackageManager {
-	for _, a := range availableAdapters() {
-		if a.Name() == pkg.Source {
-			return a
-		}
-	}
-	panic(fmt.Sprintf("no adapter found for source %q", pkg.Source))
 }

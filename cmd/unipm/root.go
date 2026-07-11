@@ -5,13 +5,19 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/DaviMGDev/unipm/pkg/adapter"
 	"github.com/DaviMGDev/unipm/pkg/config"
+	"github.com/DaviMGDev/unipm/pkg/router"
 	"github.com/spf13/cobra"
 )
 
 // version is set at build time via -ldflags.
 // Example: go build -ldflags="-X main.version=0.1.0" ./cmd/unipm
 var version = "dev"
+
+// appRouter is the global adapter registry, populated at startup from
+// compiled-in adapters that pass IsAvailable() checks.
+var appRouter *router.Registry
 
 // rootCmd is the top-level unipm command.
 var rootCmd = &cobra.Command{
@@ -37,6 +43,9 @@ func init() {
 	configPath := filepath.Join(unipmHome(), "config.yaml")
 	rootCmd.PersistentFlags().String("config", configPath, "path to config file")
 
+	// Set up the adapter router
+	appRouter = setupRouter()
+
 	// Register subcommands (defined in their own files)
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(installCmd)
@@ -44,6 +53,30 @@ func init() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(sourcesCmd)
 	rootCmd.AddCommand(completionCmd)
+}
+
+// setupRouter creates the adapter registry and registers all compiled-in
+// adapters that are available on $PATH.
+func setupRouter() *router.Registry {
+	r := router.New()
+
+	candidates := []adapter.PackageManager{
+		&adapter.AptAdapter{},
+		&adapter.NpmAdapter{},
+		// More adapters added in Phase 3:
+		// &adapter.PypiAdapter{},
+		// &adapter.FlatpakAdapter{},
+		// &adapter.BrewAdapter{},
+		// &adapter.AppImageAdapter{},
+	}
+
+	for _, a := range candidates {
+		if a.IsAvailable() {
+			r.Register(a)
+		}
+	}
+
+	return r
 }
 
 // unipmHome returns the path to the ~/.unipm directory.

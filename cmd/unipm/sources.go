@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaviMGDev/unipm/pkg/adapter"
 	"github.com/spf13/cobra"
 )
 
@@ -27,13 +26,7 @@ func runSources(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check if any are available
-	anyAvailable := false
-	for _, s := range all {
-		if s.available {
-			anyAvailable = true
-			break
-		}
-	}
+	anyAvailable := appRouter.Count() > 0
 
 	if !anyAvailable {
 		fmt.Println("No package managers are available on your system.")
@@ -73,9 +66,19 @@ type adapterStatus struct {
 // This is the canonical list of adapters — must be updated when adding
 // new adapters.
 func allAdapterStatuses() []adapterStatus {
+	// Check availability via the router for registered adapters
+	aptAvail := false
+	npmAvail := false
+	if _, err := appRouter.Get("apt"); err == nil {
+		aptAvail = true
+	}
+	if _, err := appRouter.Get("npm"); err == nil {
+		npmAvail = true
+	}
+
 	return []adapterStatus{
-		{name: "apt", available: (&adapter.AptAdapter{}).IsAvailable()},
-		{name: "npm", available: (&adapter.NpmAdapter{}).IsAvailable()},
+		{name: "apt", available: aptAvail},
+		{name: "npm", available: npmAvail},
 		// More adapters added in Phase 3:
 		// {name: "pypi", available: ...},
 		// {name: "flatpak", available: ...},

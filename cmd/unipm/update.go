@@ -39,7 +39,7 @@ func updateAll() error {
 
 	hadFailure := false
 	for _, rec := range records {
-		a, err := findAdapterByName(rec.Source)
+		a, err := appRouter.Get(rec.Source)
 		if err != nil {
 			fmt.Printf("✗ %s (%s): adapter not available — %v\n", rec.Name, rec.Source, err)
 			hadFailure = true
@@ -82,7 +82,7 @@ func updateSingle(pkgName string) error {
 		return fmt.Errorf("lookup %s: %w", pkgName, err)
 	}
 
-	a, err := findAdapterByName(rec.Source)
+	a, err := appRouter.Get(rec.Source)
 	if err != nil {
 		return fmt.Errorf("update %s: %w", pkgName, err)
 	}
