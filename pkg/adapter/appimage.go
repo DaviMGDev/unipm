@@ -33,14 +33,6 @@ func (a *AppImageAdapter) IsAvailable() bool {
 	return false
 }
 
-// appImageHubResponse represents a single entry in the AppImageHub API
-// search results (https://appimage.github.io/).
-type appImageHubResponse struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-}
-
 // appImageHubEntry represents a single AppImage in the catalog.
 type appImageHubEntry struct {
 	Name        string `json:"name"`
@@ -216,7 +208,8 @@ func downloadFile(fileURL, destPath string) error {
 		return nil
 	}
 
-	// Last resort: Go's net/http
+	// Last resort: Go's net/http.
+	//nolint:gosec // fileURL is constructed internally from trusted sources
 	resp, err := http.Get(fileURL)
 	if err != nil {
 		return fmt.Errorf("HTTP GET: %w", err)

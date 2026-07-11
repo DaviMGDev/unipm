@@ -48,28 +48,28 @@ func TestBuildSearchArgs(t *testing.T) {
 		wantArgs []string
 	}{
 		{
-			pm:    "apt",
-			query: "htop",
+			pm:       "apt",
+			query:    "htop",
 			wantArgs: []string{"apt", "search", "htop"},
 		},
 		{
-			pm:    "pacman",
-			query: "htop",
+			pm:       "pacman",
+			query:    "htop",
 			wantArgs: []string{"pacman", "-Ss", "htop"},
 		},
 		{
-			pm:    "yay",
-			query: "htop",
+			pm:       "yay",
+			query:    "htop",
 			wantArgs: []string{"yay", "-Ss", "htop"},
 		},
 		{
-			pm:    "dnf",
-			query: "htop",
+			pm:       "dnf",
+			query:    "htop",
 			wantArgs: []string{"dnf", "search", "htop"},
 		},
 		{
-			pm:    "zypper",
-			query: "htop",
+			pm:       "zypper",
+			query:    "htop",
 			wantArgs: []string{"zypper", "search", "htop"},
 		},
 		{
@@ -179,7 +179,7 @@ func TestParsePMLine(t *testing.T) {
 		// apt format
 		{pm: "apt", line: "htop/stable 3.4.1-5 amd64", want: "htop", wantVer: "3.4.1-5"},
 		{pm: "apt", line: "  interactive viewer", want: ""}, // indented description, skipped
-		{pm: "apt", line: "Sorting...", want: ""},            // header, skipped
+		{pm: "apt", line: "Sorting...", want: ""},           // header, skipped
 
 		// pacman format
 		{pm: "pacman", line: "core/htop 3.4.1-1", want: "htop", wantVer: "3.4.1-1"},
