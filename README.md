@@ -297,6 +297,7 @@ pkg/router/          # Adapter registry and fan-out logic
 pkg/state/           # state.json read/write
 pkg/ui/              # Bubbletea TUI components
 pkg/config/          # Config file parsing
+specs/               # VibeSpecs spec files (see specs/index.md)
 ```
 
 ### Coding conventions
@@ -305,6 +306,8 @@ pkg/config/          # Config file parsing
 - Write tests for every adapter using the host's actual package manager
   (CI uses containers for isolation).
 - Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, etc.).
+- Specs live in the `specs/` directory (VibeSpecs format). See `specs/index.md`
+  for the reading order and `specs/architecture.md` for the system design.
 
 ---
 
