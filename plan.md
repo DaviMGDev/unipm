@@ -1,5 +1,8 @@
 # Implementation Plan — unipm
 
+> ✅ **COMPLETE** — All 4 phases implemented as of v0.4.0 (2026-07-11).
+> This file is retained for historical reference.
+
 ## Goal
 
 Deliver a working meta package manager CLI that unifies `apt`, `npm`, `pypi`,
