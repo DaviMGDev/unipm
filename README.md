@@ -190,7 +190,7 @@ unipm sources
 # flatpak   ✓
 # appimage  ✓
 # brew      ✗ (not on $PATH)
-# arch      ✓
+# distrobox-arch-dev  ✗ (not on $PATH)
 ```
 
 ### `unipm completion [bash|zsh|fish]`
@@ -289,8 +289,9 @@ Contributions are welcome! Here's how to get started:
 
 ### Development requirements
 
-- Go 1.22+
+- Go 1.24+
 - `golangci-lint` (for linting)
+- `gofumpt` (for formatting)
 - The native package manager you are developing an adapter for
 
 ### Project structure
@@ -298,6 +299,7 @@ Contributions are welcome! Here's how to get started:
 ```
 cmd/unipm/           # Main binary entrypoint
 pkg/adapter/         # PackageManager interface + all adapters
+pkg/cache/           # Tab-completion cache (cache.json)
 pkg/router/          # Adapter registry and fan-out logic
 pkg/state/           # state.json read/write
 pkg/ui/              # Bubbletea TUI components

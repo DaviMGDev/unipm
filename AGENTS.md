@@ -115,6 +115,7 @@ type PackageManager interface {
 ```
 cmd/unipm/           # Main binary entrypoint (Cobra commands)
 pkg/adapter/         # PackageManager interface + adapter implementations
+pkg/cache/           # Tab-completion cache (cache.json)
 pkg/router/          # Adapter registry and fan-out dispatch logic
 pkg/state/           # state.json read/write with atomic writes
 pkg/ui/              # Bubbletea TUI components (collision prompt only)
