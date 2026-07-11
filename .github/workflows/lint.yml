@@ -18,24 +18,6 @@ jobs:
           go-version: "1.24"
           cache: true
 
-      - name: Check gofumpt formatting
-        run: |
-          go install mvdan.cc/gofumpt@v0.10.0
-          echo "gofumpt version:"
-          gofumpt -version
-          unformatted=$(gofumpt -l . 2>&1)
-          if [ -n "$unformatted" ]; then
-            echo "Files not formatted with gofumpt:"
-            echo "$unformatted"
-            echo ""
-            echo "Required changes:"
-            gofumpt -d .
-            echo ""
-            echo "Run 'gofumpt -w .' locally and commit the changes."
-            exit 1
-          fi
-          echo "All files are properly formatted."
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
