@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"time"
 )
@@ -43,10 +44,10 @@ func (a *NpmAdapter) IsAvailable() bool {
 // Search queries the npm registry API for packages matching the given
 // query. It uses the public npm search endpoint.
 func (a *NpmAdapter) Search(query string) ([]Package, error) {
-	url := fmt.Sprintf("https://registry.npmjs.org/-/v1/search?text=%s&size=20", query)
+	searchURL := fmt.Sprintf("https://registry.npmjs.org/-/v1/search?text=%s&size=20", url.QueryEscape(query))
 
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	resp, err := client.Get(searchURL)
 	if err != nil {
 		return nil, fmt.Errorf("npm search %s: %w", query, err)
 	}

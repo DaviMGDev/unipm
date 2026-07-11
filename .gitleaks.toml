@@ -1,0 +1,27 @@
+# gitleaks configuration for unipm
+# https://github.com/gitleaks/gitleaks
+
+title = "unipm gitleaks config"
+
+[allowlist]
+  description = "global allowlist"
+  paths = [
+    '''testdata/''',
+    '''_test\.go$''',
+    '''\.md$''',
+    '''\.feature$''',
+    '''go\.sum$''',
+  ]
+
+# Suppress false positives in golden-fixture files, specs, and tests.
+# These files contain example command output and test expectations,
+# not real credentials.
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+
+[rules.allowlist]
+  paths = [
+    '''testdata/''',
+  ]
