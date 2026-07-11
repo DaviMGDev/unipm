@@ -23,11 +23,26 @@ jobs:
 
       - name: Check coverage threshold
         run: |
+          echo "=== Per-package coverage ==="
+          go tool cover -func=coverage.out | grep -v "total:" | grep "\.go:" | awk '{print $1, $3}' | sort
+          echo ""
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Total coverage: ${COVERAGE}%"
           if [ -n "$COVERAGE" ] && [ "$(echo "$COVERAGE < 80" | bc)" = "1" ]; then
-            echo "::warning::Coverage ${COVERAGE}% is below 80% threshold"
+            echo "::error::Coverage ${COVERAGE}% is below 80% threshold"
+            exit 1
           fi
+          echo "::notice::Coverage ${COVERAGE}% meets 80% threshold"
+
+      - name: Check adapter package coverage
+        run: |
+          ADAPTER_COV=$(go tool cover -func=coverage.out | grep "github.com/DaviMGDev/unipm/pkg/adapter" | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Adapter package coverage: ${ADAPTER_COV}%"
+          if [ -n "$ADAPTER_COV" ] && [ "$(echo "$ADAPTER_COV < 80" | bc)" = "1" ]; then
+            echo "::error::Adapter package coverage ${ADAPTER_COV}% is below 80% threshold"
+            exit 1
+          fi
+          echo "::notice::Adapter package coverage ${ADAPTER_COV}% meets 80% threshold"
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -38,6 +53,7 @@ jobs:
   tier2:
     name: Tier 2 — Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -47,4 +63,29 @@ jobs:
           cache: true
 
       - name: Run Tier 2 integration tests
-        run: go test -tags=integration ./... -v -count=1
+        run: |
+          go test -tags=integration ./... -v -count=1 2>&1 | tee integration-output.txt
+
+      - name: Check skipped adapter count
+        if: always()
+        run: |
+          SKIPPED=$(grep -c "SKIP:" integration-output.txt 2>/dev/null || echo "0")
+          echo "Adapters skipped: ${SKIPPED}"
+
+          # Count skips by adapter name
+          echo "=== Skipped adapters ==="
+          grep "SKIP:" integration-output.txt 2>/dev/null || echo "(none)"
+
+          # Only flatpak and distrobox are allowed to skip in Docker
+          # If >2 adapters skip, something is wrong
+          if [ "${SKIPPED}" -gt 2 ]; then
+            echo "::error::${SKIPPED} adapters skipped (max 2 allowed: flatpak + distrobox)"
+            echo "::error::apt, npm, pypi, brew, and appimage must not skip in Docker"
+            exit 1
+          fi
+
+          if [ "${SKIPPED}" -gt 0 ]; then
+            echo "::warning::${SKIPPED} adapter(s) skipped — this is acceptable for flatpak/distrobox"
+          else
+            echo "::notice::All adapters available — no skips"
+          fi
