@@ -46,6 +46,11 @@ func init() {
 	// Set up the adapter router
 	appRouter = setupRouter()
 
+	// Register --source flag completion for install and search commands
+	rootCmd.RegisterFlagCompletionFunc("source", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return appRouter.Names(), cobra.ShellCompDirectiveNoFileComp
+	})
+
 	// Register subcommands (defined in their own files)
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(installCmd)

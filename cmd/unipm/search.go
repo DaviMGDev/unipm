@@ -8,12 +8,17 @@ import (
 	"time"
 
 	"github.com/DaviMGDev/unipm/pkg/adapter"
+	"github.com/DaviMGDev/unipm/pkg/cache"
+	"github.com/DaviMGDev/unipm/pkg/config"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	searchCmd.Flags().Int("timeout", 10, "per-adapter timeout in seconds")
 	searchCmd.Flags().StringP("source", "s", "", "source(s) to search (comma-separated, e.g. apt,npm)")
+
+	// Register completion for the positional package-name argument
+	searchCmd.ValidArgsFunction = packageNameCompletion
 }
 
 var searchCmd = &cobra.Command{
@@ -75,6 +80,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	// Print results table
 	printSearchTable(allPackages)
+
+	// Populate completion cache with search results
+	populateCompletionCache(allPackages)
 
 	return nil
 }
@@ -162,4 +170,39 @@ func printSearchTable(packages []adapter.Package) {
 			p.Description,
 		)
 	}
+}
+
+// populateCompletionCache adds search result package names to the
+// tab-completion cache for future shell completions.
+func populateCompletionCache(packages []adapter.Package) {
+	names := make([]string, 0, len(packages))
+	for _, p := range packages {
+		names = append(names, p.Name)
+	}
+	if len(names) > 0 {
+		_ = cache.AddRecords(names)
+	}
+}
+
+// packageNameCompletion provides shell completion for package names
+// from the completion cache.
+func packageNameCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// Don't attempt network completions for queries shorter than 3 chars
+	if len(toComplete) < 3 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	ttl := time.Duration(cfg.CacheTTL) * time.Second
+	matches := cache.Matching(toComplete, ttl)
+
+	if len(matches) == 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return matches, cobra.ShellCompDirectiveNoFileComp
 }

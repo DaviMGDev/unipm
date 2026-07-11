@@ -12,6 +12,9 @@ import (
 
 func init() {
 	installCmd.Flags().StringP("source", "s", "", "source to install from (e.g., apt, npm, pypi)")
+
+	// Register completion for the positional package-name argument
+	installCmd.ValidArgsFunction = packageNameCompletion
 }
 
 var installCmd = &cobra.Command{
