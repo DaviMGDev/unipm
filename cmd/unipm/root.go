@@ -63,8 +63,8 @@ func setupRouter() *router.Registry {
 	candidates := []adapter.PackageManager{
 		&adapter.AptAdapter{},
 		&adapter.NpmAdapter{},
+		&adapter.PypiAdapter{},
 		// More adapters added in Phase 3:
-		// &adapter.PypiAdapter{},
 		// &adapter.FlatpakAdapter{},
 		// &adapter.BrewAdapter{},
 		// &adapter.AppImageAdapter{},

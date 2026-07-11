@@ -67,20 +67,16 @@ type adapterStatus struct {
 // new adapters.
 func allAdapterStatuses() []adapterStatus {
 	// Check availability via the router for registered adapters
-	aptAvail := false
-	npmAvail := false
-	if _, err := appRouter.Get("apt"); err == nil {
-		aptAvail = true
-	}
-	if _, err := appRouter.Get("npm"); err == nil {
-		npmAvail = true
+	avail := func(name string) bool {
+		_, err := appRouter.Get(name)
+		return err == nil
 	}
 
 	return []adapterStatus{
-		{name: "apt", available: aptAvail},
-		{name: "npm", available: npmAvail},
+		{name: "apt", available: avail("apt")},
+		{name: "npm", available: avail("npm")},
+		{name: "pypi", available: avail("pypi")},
 		// More adapters added in Phase 3:
-		// {name: "pypi", available: ...},
 		// {name: "flatpak", available: ...},
 		// {name: "brew", available: ...},
 		// {name: "appimage", available: ...},
