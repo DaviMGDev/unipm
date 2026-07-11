@@ -20,6 +20,7 @@
 |-----|-------|--------|------|
 | [0001](0001-adapter-pattern.md) | Adapter pattern for backend dispatch | Accepted | 2026-07-10 |
 | [0002](0002-no-source-priority.md) | No source priority or ranking | Accepted | 2026-07-10 |
+| [0003](0003-testing-strategy.md) | Tiered testing strategy with CI offload for containerized backends | Accepted | 2026-07-11 |
 
 ## See also
 
