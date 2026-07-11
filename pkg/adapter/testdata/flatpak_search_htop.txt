@@ -1,0 +1,4 @@
+Name	Description	Application ID	Version	Branch	Remotes
+Flatseal	Manage Flatpak permissions	com.github.tchx84.Flatseal	2.3.0	stable	flathub
+Bottles	Run Windows software easily	com.usebottles.bottles	51.17	stable	flathub
+HandBrake	Open source video transcoder	fr.handbrake.ghb	1.9.2	stable	flathub

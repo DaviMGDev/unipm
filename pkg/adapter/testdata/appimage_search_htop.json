@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Etcher",
+    "description": "Flash OS images to SD cards & USB drives, safely and easily.",
+    "links": [
+      {
+        "url": "https://github.com/balena-io/etcher/releases/download/v1.19.21/balenaEtcher-1.19.21-x64.AppImage"
+      }
+    ]
+  },
+  {
+    "name": "Cura",
+    "description": "Slicer for 3D printers.",
+    "links": [
+      {
+        "url": "https://github.com/Ultimaker/Cura/releases/download/5.8.0/UltiMaker-Cura-5.8.0-linux-X64.AppImage"
+      }
+    ]
+  }
+]

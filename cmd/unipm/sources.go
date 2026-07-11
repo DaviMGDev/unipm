@@ -76,9 +76,8 @@ func allAdapterStatuses() []adapterStatus {
 		{name: "apt", available: avail("apt")},
 		{name: "npm", available: avail("npm")},
 		{name: "pypi", available: avail("pypi")},
-		// More adapters added in Phase 3:
-		// {name: "flatpak", available: ...},
-		// {name: "brew", available: ...},
-		// {name: "appimage", available: ...},
+		{name: "flatpak", available: avail("flatpak")},
+		{name: "brew", available: avail("brew")},
+		{name: "appimage", available: avail("appimage")},
 	}
 }
