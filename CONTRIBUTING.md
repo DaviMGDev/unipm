@@ -63,7 +63,7 @@ go build -o unipm ./cmd/unipm
 ## Development Workflow
 
 1. **Fork** the repository.
-2. **Create a feature branch** from `master`:
+2. **Create a feature branch** from `main`:
    ```bash
    git checkout -b feat/my-feature
    ```
@@ -75,7 +75,7 @@ go build -o unipm ./cmd/unipm
    golangci-lint run ./...
    ```
 5. **Commit** using [conventional commits](#commit-conventions).
-6. **Push** to your fork and open a pull request against `master`.
+6. **Push** to your fork and open a pull request against `main`.
 
 ---
 
@@ -242,7 +242,7 @@ Coverage target: **80% per adapter package** (enforced in CI).
 6. **Request review** from a maintainer.
 7. **Address feedback** — be open to suggestions; the maintainer may ask for
    changes.
-8. **Squash merge** — the maintainer will squash-merge into `master` with a
+8. **Squash merge** — the maintainer will squash-merge into `main` with a
    clean conventional-commit message.
 
 ### PR Title Convention
@@ -286,7 +286,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the version history. unipm follows
 
 ### Releasing a New Version
 
-1. Ensure `master` is green (all CI checks pass).
+1. Ensure `main` is green (all CI checks pass).
 2. Update `CHANGELOG.md` — move `[Unreleased]` entries to a new version section.
 3. Bump the version in the code (e.g., a `version` constant in `cmd/unipm/` or
    via `-ldflags` at build time).
