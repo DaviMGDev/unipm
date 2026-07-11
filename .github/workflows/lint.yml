@@ -21,10 +21,15 @@ jobs:
       - name: Check gofumpt formatting
         run: |
           go install mvdan.cc/gofumpt@v0.10.0
-          gofumpt -w .
-          if [ -n "$(git diff --name-only)" ]; then
-            echo "Files not formatted with gofumpt v0.10.0:"
-            git diff --name-only
+          echo "gofumpt version:"
+          gofumpt -version
+          unformatted=$(gofumpt -l . 2>&1)
+          if [ -n "$unformatted" ]; then
+            echo "Files not formatted with gofumpt:"
+            echo "$unformatted"
+            echo ""
+            echo "Required changes:"
+            gofumpt -d .
             echo ""
             echo "Run 'gofumpt -w .' locally and commit the changes."
             exit 1

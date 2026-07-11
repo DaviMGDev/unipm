@@ -12,16 +12,3 @@ title = "unipm gitleaks config"
     '''\.feature$''',
     '''go\.sum$''',
   ]
-
-# Suppress false positives in golden-fixture files, specs, and tests.
-# These files contain example command output and test expectations,
-# not real credentials.
-
-[[rules]]
-  id = "generic-api-key"
-  description = "Generic API Key"
-
-[rules.allowlist]
-  paths = [
-    '''testdata/''',
-  ]
